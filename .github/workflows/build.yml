@@ -1,0 +1,75 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ClipBoard.app
+    runs-on: macos-14  # Apple Silicon runner (M1)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build (Release)
+        run: swift build -c release
+
+      - name: Package .app bundle
+        run: |
+          APP_NAME="ClipBoard"
+          APP_BUNDLE="${APP_NAME}.app"
+
+          mkdir -p "${APP_BUNDLE}/Contents/MacOS"
+          mkdir -p "${APP_BUNDLE}/Contents/Resources"
+
+          cp ".build/release/${APP_NAME}" "${APP_BUNDLE}/Contents/MacOS/"
+          cp "Resources/Info.plist" "${APP_BUNDLE}/Contents/"
+
+          # Ad-hoc sign
+          codesign --force --deep --sign - "${APP_BUNDLE}"
+
+          # Zip for distribution
+          ditto -c -k --keepParent "${APP_BUNDLE}" "${APP_NAME}.zip"
+
+          echo "✅ Built ${APP_BUNDLE}"
+          ls -lh "${APP_NAME}.zip"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClipBoard-macOS
+          path: ClipBoard.zip
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ClipBoard.zip
+          generate_release_notes: true
+          body: |
+            ## ClipBoard ${{ github.ref_name }}
+
+            A native macOS clipboard manager — **⌘⇧V** to open, just like Windows Win+V.
+
+            ### Install
+            1. Download `ClipBoard.zip` below
+            2. Unzip and drag `ClipBoard.app` to your Applications folder
+            3. Launch and grant Accessibility permission when prompted
+
+            ### Features
+            - ⌘⇧V global shortcut to open the clipboard panel
+            - Menu bar icon for quick access
+            - Clipboard history — text, images, files, URLs
+            - Search, pin favorites, click to re-copy
+            - Native macOS design with vibrancy
+
+            > Requires macOS 13 (Ventura) or later
