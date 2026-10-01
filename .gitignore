@@ -1,0 +1,29 @@
+# Swift / Xcode
+.build/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.playground/xcuserdata/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+*.app
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# IDE
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Package Manager
+Package.resolved
